@@ -50,15 +50,17 @@ $(async function () {
         // grab the required fields
         const token = localStorage.getItem("token");
         const username = localStorage.getItem("username");
-        let author = null;
-        let title = $("#new-title").val();
-        let url = $("#new-url").val();
+        const author = localStorage.getItem("name");
+        const title = $("#new-title").val();
+        const url = $("#new-url").val();
 
-        // // call the create method, which calls the API and then builds a new user instance
-        // const newUser = await User.create(username, password, name);
-        // currentUser = newUser;
-        // syncCurrentUserToLocalStorage();
-        // loginAndSubmitForm();
+        let passedUser = { token, username, author };
+        let passedStory = { title, url };
+
+        const newStory = await StoryList.addStory(passedUser, passedStory);
+        console.log(newStory);
+        $("#new-title").val("");
+        $("#new-url").val("");
     });
 
     $createAccountForm.on("submit", async function (evt) {
@@ -126,6 +128,7 @@ $(async function () {
 
         if (currentUser) {
             showNavForLoggedInUser();
+            $newArticle.show();
         }
     }
 
@@ -234,6 +237,7 @@ $(async function () {
         if (currentUser) {
             localStorage.setItem("token", currentUser.loginToken);
             localStorage.setItem("username", currentUser.username);
+            localStorage.setItem("name", currentUser.name);
         }
     }
 });
