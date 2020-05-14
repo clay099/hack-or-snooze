@@ -43,7 +43,11 @@ nav {
 }
 
 .main-nav-links {
-    margin: 0 15px;
+    margin: 0 10px;
+    padding-left: 10px;
+    font-size: 0.85rem;
+    text-align: center;
+    border-left: 1px solid black;
 }
 
 .nav-link {

@@ -153,6 +153,36 @@ class User {
         existingUser.ownStories = response.data.user.stories.map((s) => new Story(s));
         return existingUser;
     }
+
+    // // add favorite
+    // static async favorite(event) {
+    //     // toggles class between a filled in background and clear background
+    //     $(event.target).toggleClass("far").toggleClass("fas");
+    //     // checks if target has the filled in background
+    //     // selects the whole line
+    //     let addFavorite = $(event.target).closest("li");
+    //     // selects the line id
+    //     let addFavoriteId = addFavorite[0].id;
+    //     return addFavoriteId;
+    // }
+
+    static async addFavorite(token, username, storyid) {
+        const response = await axios.post(`${BASE_URL}/users/${username}/favorites/${storyid}`, {
+            token,
+        });
+        let updatedFavorites = response.data.user.favorites.map((s) => new Story(s));
+        return updatedFavorites;
+    }
+
+    static async deleteFavorite(token, username, storyid) {
+        const response = await axios.delete(`${BASE_URL}/users/${username}/favorites/${storyid}`, {
+            data: {
+                token,
+            },
+        });
+        let updatedFavorites = response.data.user.favorites.map((s) => new Story(s));
+        return updatedFavorites;
+    }
 }
 
 /**
