@@ -42,8 +42,9 @@ $(async function () {
         // set the global user to the user instance
         currentUser = userInstance;
         syncCurrentUserToLocalStorage();
-        uploadFavorites(currentUser.favorites);
+        updateFavorites(currentUser.favorites);
         loginAndSubmitForm();
+        await loadFavoriteIcon();
     });
 
     /**
@@ -189,8 +190,15 @@ $(async function () {
         storyList = storyListInstance;
         // empty out that part of the page
         $allStoriesList.empty();
-
         // loop through all of our stories and generate HTML for them
+        await storyLoop();
+
+        // loop trough all li's on the page and fill in start if
+        await loadFavoriteIcon();
+    }
+
+    // loop through all of our stories and generate HTML for them
+    function storyLoop() {
         for (let story of storyList.stories) {
             const result = generateStoryHTML(story);
             $allStoriesList.append(result);
@@ -206,19 +214,39 @@ $(async function () {
 
         // render story markup
         const storyMarkup = $(`
-      <li id="${story.storyId}">
-        <span class="fav"><i class="far fa-star"></i></span>
-        <a class="article-link" href="${story.url}" target="a_blank">
-          <strong>${story.title}</strong>
-        </a>
+        <li id="${story.storyId}">
+            <span class="fav"><i class="far fa-star"></i></span>
+            <a class="article-link" href="${story.url}" target="a_blank">
+                <strong>${story.title}</strong>
+            </a>
         
-        <small class="article-author">by ${story.author}</small>
-        <small class="article-hostname ${hostName}">(${hostName})</small>
-        <small class="article-username">posted by ${story.username}</small>
-      </li>
+            <small class="article-author">by ${story.author}</small>
+            <small class="article-hostname ${hostName}">(${hostName})</small>
+            <small class="article-username">posted by ${story.username}</small>
+        </li>
     `);
 
         return storyMarkup;
+    }
+
+    // changes the fontawsome icone if id is favorite
+    function loadFavoriteIcon() {
+        if (localStorage.length > 0) {
+            // creates a variable to store the local storage of favorites
+            let setFavorites = JSON.parse(localStorage.favorites);
+            // loops over the each value in the variable
+            for (let favorite of setFavorites) {
+                // loop over each li in the document
+                $("li").each(function () {
+                    // if the li's id is the same as the favorite id
+                    if (this.id === favorite) {
+                        // update the class to remove far and add fas (outline vs filledin star object)
+                        this.children[0].children[0].classList.toggle("far");
+                        this.children[0].children[0].classList.toggle("fas");
+                    }
+                });
+            }
+        }
     }
 
     /* hide all elements in elementsArr */
@@ -275,8 +303,11 @@ $(async function () {
         let token = localStorage.getItem("token");
         let storyid = $(event.target).closest("li")[0].id;
         let username = localStorage.getItem("username");
+        let starClass = $(evt.target);
         let currentFavorites = [];
         favorites = JSON.parse(localStorage.getItem("favorites"));
+
+        toggleStar(starClass);
 
         // check if currentFavorites includes the clicked id - run the delete function
         if (favorites.includes(storyid)) {
@@ -301,6 +332,12 @@ $(async function () {
             favorites.push(favorite.storyId);
         }
         syncUserFavoritesToLocalStorage();
+    }
+
+    function toggleStar(starClass) {
+        console.log(starClass);
+        starClass.toggleClass("fas");
+        starClass.toggleClass("far");
     }
 
     // funciton to save favorites array to local storage
