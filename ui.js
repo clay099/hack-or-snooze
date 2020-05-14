@@ -52,6 +52,7 @@ $(async function () {
      *  If successfully we will setup a new user instance
      */
 
+    //  creates a new article
     $newArticle.on("submit", async function (evt) {
         evt.preventDefault(); // no page refresh
 
@@ -65,10 +66,13 @@ $(async function () {
         let passedUser = { token, username, author };
         let passedStory = { title, url };
 
+        // adds passed story to the api
         const newStory = await StoryList.addStory(passedUser, passedStory);
         $("#new-title").val("");
         $("#new-url").val("");
+        // generates stories to add newStory to page
         await generateStories();
+        // hides form
         $newArticle.hide();
     });
 
@@ -345,6 +349,40 @@ $(async function () {
         if (favorites) {
             // stringify the array & save to local storage
             localStorage.setItem("favorites", JSON.stringify(favorites));
+        }
+    }
+
+    $navFavorites.on("click", async function (evt) {
+        generateFavoriteStories();
+    });
+
+    async function generateFavoriteStories() {
+        // get an instance of StoryList
+        const storyListInstance = await StoryList.getStories();
+        // update our global variable
+        storyList = storyListInstance;
+        // empty out that part of the page
+        $allStoriesList.empty();
+        // loop through all of our stories and generate HTML for them
+        await favoriteStoryLoop();
+
+        // loop trough all li's on the page and fill in start if
+        await loadFavoriteIcon();
+    }
+
+    // loop through all of our stories and generate HTML for them
+    function favoriteStoryLoop() {
+        // creates a variable to store the local storage of favorites
+        let setFavorites = JSON.parse(localStorage.favorites);
+
+        // loops over the each value in the variable
+        for (let favorite of setFavorites) {
+            for (let story of storyList.stories) {
+                if (story.storyId === favorite) {
+                    const result = generateStoryHTML(story);
+                    $allStoriesList.append(result);
+                }
+            }
         }
     }
 });
