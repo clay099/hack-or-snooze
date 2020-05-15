@@ -183,6 +183,15 @@ class User {
         let updatedFavorites = response.data.user.favorites.map((s) => new Story(s));
         return updatedFavorites;
     }
+
+    static async deleteStory(token, storyid) {
+        const response = await axios.delete(`${BASE_URL}/stories/${storyid}`, {
+            data: {
+                token,
+            },
+        });
+        return response.data.story;
+    }
 }
 
 /**

@@ -59,6 +59,10 @@ nav {
     margin-left: auto;
 }
 
+#nav-logout {
+    margin-left: 0px;
+}
+
 .container {
     display: flex;
     flex-direction: column;
@@ -146,7 +150,7 @@ form > hr {
     cursor: pointer;
 }
 
-.star,
+.fa-star,
 .trash-can,
 .pencil {
     font-size: 0.75rem;
@@ -186,13 +190,6 @@ form > hr {
     display: block;
     margin-top: 5px;
     margin-left: 25px;
-}
-
-#favorited-articles,
-#filtered-articles,
-#my-articles {
-    list-style: none;
-    padding-left: 20px;
 }
 
 .account-forms-container {

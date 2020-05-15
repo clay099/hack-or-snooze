@@ -11,7 +11,11 @@ $(async function () {
     const $createAccountForm = $("#create-account-form");
     const $ownStories = $("#my-articles");
     const $navLogin = $("#nav-login");
+    const $navUser = $("#nav-user");
     const $navLogOut = $("#nav-logout");
+    const $profileName = $("#profile-name");
+    const $profileUsername = $("#profile-username");
+    const $profileAccountDate = $("#profile-account-date");
 
     // global storyList variable
     let storyList = null;
@@ -45,6 +49,8 @@ $(async function () {
         updateFavorites(currentUser.favorites);
         loginAndSubmitForm();
         await loadFavoriteIcon();
+        await myStoryDelete();
+        dynamicUser();
     });
 
     /**
@@ -72,6 +78,8 @@ $(async function () {
         $("#new-url").val("");
         // generates stories to add newStory to page
         await generateStories();
+        // adds trash can to story created
+        myStoryDelete();
         // hides form
         $newArticle.hide();
     });
@@ -80,6 +88,8 @@ $(async function () {
     $navNewArticle.on("click", () => {
         if (currentUser) {
             $newArticle.toggle();
+            generateUserStories();
+            $("#user-profile").addClass("hidden");
         }
     });
 
@@ -128,12 +138,31 @@ $(async function () {
         hideElements();
         await generateStories();
         $allStoriesList.show();
+        myStoryDelete();
     });
 
     /**
      * On page load, checks local storage to see if the user is already logged in.
      * Renders page information accordingly.
      */
+
+    function dynamicUser() {
+        $navUser.text(`${localStorage.username}`);
+        $profileName.text(`Name: ${localStorage.name}`);
+        $profileUsername.text(`Username: ${localStorage.username}`);
+
+        const date = localStorage.created;
+        const year = date.slice(0, 4);
+        const month = date.slice(5, 7);
+        const day = date.slice(8, 10);
+        const formattedDate = `${month} - ${day} - ${year}`;
+        $profileAccountDate.text(`Account Created: ${formattedDate}`);
+    }
+
+    $navUser.on("click", function () {
+        $("#user-profile").removeClass("hidden");
+        $allStoriesList.empty();
+    });
 
     async function checkIfLoggedIn() {
         // let's see if we're logged in
@@ -149,6 +178,8 @@ $(async function () {
         if (currentUser) {
             showNavForLoggedInUser();
             updateFavorites(currentUser.favorites);
+            dynamicUser();
+            myStoryDelete();
         }
     }
 
@@ -274,6 +305,7 @@ $(async function () {
         $navNewArticle.show();
         $navFavorites.show();
         $navMyStories.show();
+        $navUser.show();
     }
 
     /* simple function to pull the hostname from a URL */
@@ -298,33 +330,36 @@ $(async function () {
             localStorage.setItem("token", currentUser.loginToken);
             localStorage.setItem("username", currentUser.username);
             localStorage.setItem("name", currentUser.name);
+            localStorage.setItem("created", currentUser.createdAt);
         }
     }
 
     // click handle to check if click is on the star icon
     $(".articles-container").on("click", ".fav", async function (evt) {
-        // gather elements to pass through
-        let token = localStorage.getItem("token");
-        let storyid = $(event.target).closest("li")[0].id;
-        let username = localStorage.getItem("username");
-        let starClass = $(evt.target);
-        let currentFavorites = [];
-        favorites = JSON.parse(localStorage.getItem("favorites"));
+        if (localStorage.length > 0) {
+            // gather elements to pass through
+            let token = localStorage.getItem("token");
+            let storyid = $(event.target).closest("li")[0].id;
+            let username = localStorage.getItem("username");
+            let starClass = $(evt.target);
+            let currentFavorites = [];
+            favorites = JSON.parse(localStorage.getItem("favorites"));
 
-        toggleStar(starClass);
+            toggleStar(starClass);
 
-        // check if currentFavorites includes the clicked id - run the delete function
-        if (favorites.includes(storyid)) {
-            console.log(`remove ${storyid}`);
-            // sets variable to be passed into upload Favorites function
-            currentFavorites = new Set(await User.deleteFavorite(token, username, storyid));
-            favoriteLoop(currentFavorites);
-            // check if currentFavorites does not include the clicked id - run the add favorite function
-        } else {
-            console.log(`add ${storyid}`);
-            // sets variable to be passed into upload Favorites function
-            currentFavorites = new Set(await User.addFavorite(token, username, storyid));
-            favoriteLoop(currentFavorites);
+            // check if currentFavorites includes the clicked id - run the delete function
+            if (favorites.includes(storyid)) {
+                console.log(`remove ${storyid}`);
+                // sets variable to be passed into upload Favorites function
+                currentFavorites = new Set(await User.deleteFavorite(token, username, storyid));
+                favoriteLoop(currentFavorites);
+                // check if currentFavorites does not include the clicked id - run the add favorite function
+            } else {
+                console.log(`add ${storyid}`);
+                // sets variable to be passed into upload Favorites function
+                currentFavorites = new Set(await User.addFavorite(token, username, storyid));
+                favoriteLoop(currentFavorites);
+            }
         }
     });
 
@@ -354,6 +389,8 @@ $(async function () {
 
     $navFavorites.on("click", async function (evt) {
         generateFavoriteStories();
+        $newArticle.hide();
+        $("#user-profile").addClass("hidden");
     });
 
     async function generateFavoriteStories() {
@@ -368,21 +405,97 @@ $(async function () {
 
         // loop trough all li's on the page and fill in start if
         await loadFavoriteIcon();
+
+        await myStoryDelete();
     }
 
     // loop through all of our stories and generate HTML for them
     function favoriteStoryLoop() {
         // creates a variable to store the local storage of favorites
-        let setFavorites = JSON.parse(localStorage.favorites);
+        if (localStorage.length > 0) {
+            let setFavorites = JSON.parse(localStorage.favorites);
 
-        // loops over the each value in the variable
-        for (let favorite of setFavorites) {
-            for (let story of storyList.stories) {
-                if (story.storyId === favorite) {
-                    const result = generateStoryHTML(story);
-                    $allStoriesList.append(result);
+            // loops over the each value in the variable
+            for (let favorite of setFavorites) {
+                for (let story of storyList.stories) {
+                    if (story.storyId === favorite) {
+                        const result = generateStoryHTML(story);
+                        $allStoriesList.append(result);
+                    }
                 }
             }
         }
+    }
+
+    $navMyStories.on("click", async function (evt) {
+        generateUserStories();
+        $newArticle.hide();
+        $("#user-profile").addClass("hidden");
+    });
+
+    async function generateUserStories() {
+        // get an instance of StoryList
+        const storyListInstance = await StoryList.getStories();
+        // update our global variable
+        storyList = storyListInstance;
+        // empty out that part of the page
+        $allStoriesList.empty();
+        // loop through all of our stories and generate HTML for them
+        await userStoryLoop();
+
+        // loop trough all li's on the page and fill in start if
+        await loadFavoriteIcon();
+
+        await myStoryDelete();
+    }
+
+    // loop through all of our stories and generate HTML for them
+    function userStoryLoop() {
+        // creates a variable to store the local storage of favorites
+        let name = localStorage.name;
+
+        // loops over the each value in the variable
+
+        for (let story of storyList.stories) {
+            if (story.author === name) {
+                const result = generateStoryHTML(story);
+                $allStoriesList.append(result);
+            }
+        }
+    }
+
+    // add trash can to stories you have posted
+    function myStoryDelete() {
+        // check that a user is logged in
+        if (localStorage.length > 0) {
+            // save username
+            let user = localStorage.username;
+            // loop over ever li/story
+            $("li").each(function () {
+                // locate the child where the username is located and check if this username text matches the current user
+                if (this.children[4].textContent.indexOf(user) > -1) {
+                    // if matched prepend a trash can icon to the li
+                    $(this).prepend('<i class="far fa-trash-alt trash-can"></i>');
+                }
+            });
+        }
+    }
+
+    // on click of trash can run storyToDelete function
+    $allStoriesList.on("click", ".fa-trash-alt", function (event) {
+        storyToDelete();
+    });
+
+    // funciton to delete clicked story
+    async function storyToDelete() {
+        // selete variables
+        let token = localStorage.getItem("token");
+        let storyid = $(event.target).closest("li")[0].id;
+
+        // send request to delete
+        let returnedStories = await User.deleteStory(token, storyid);
+        // regenerate stories on page so they are updated
+        await generateStories();
+        myStoryDelete();
     }
 });
