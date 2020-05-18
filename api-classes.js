@@ -43,12 +43,15 @@ class StoryList {
      * Returns the new story object
      */
 
+    // add story to database
     static async addStory(user, newStory) {
+        // access api
         const response = await axios.post(`${BASE_URL}/stories`, {
             token: user.token,
             story: { author: user.author, title: newStory.title, url: newStory.url },
         });
 
+        // return story
         return response.data.story;
     }
 }
@@ -154,42 +157,41 @@ class User {
         return existingUser;
     }
 
-    // // add favorite
-    // static async favorite(event) {
-    //     // toggles class between a filled in background and clear background
-    //     $(event.target).toggleClass("far").toggleClass("fas");
-    //     // checks if target has the filled in background
-    //     // selects the whole line
-    //     let addFavorite = $(event.target).closest("li");
-    //     // selects the line id
-    //     let addFavoriteId = addFavorite[0].id;
-    //     return addFavoriteId;
-    // }
-
+    // add favorites to database
     static async addFavorite(token, username, storyid) {
+        // access api
         const response = await axios.post(`${BASE_URL}/users/${username}/favorites/${storyid}`, {
             token,
         });
+        // get updated list of all favorites
         let updatedFavorites = response.data.user.favorites.map((s) => new Story(s));
+        // return list of all favorites
         return updatedFavorites;
     }
 
+    // delete favorite from database
     static async deleteFavorite(token, username, storyid) {
+        // access api
         const response = await axios.delete(`${BASE_URL}/users/${username}/favorites/${storyid}`, {
             data: {
                 token,
             },
         });
+        // get list of all favorites
         let updatedFavorites = response.data.user.favorites.map((s) => new Story(s));
+        // return list of all favorites
         return updatedFavorites;
     }
 
+    // delete story you created from database
     static async deleteStory(token, storyid) {
+        // access api
         const response = await axios.delete(`${BASE_URL}/stories/${storyid}`, {
             data: {
                 token,
             },
         });
+        // return the story deleted
         return response.data.story;
     }
 }

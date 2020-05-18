@@ -85,10 +85,16 @@ $(async function () {
     });
 
     // event listener to toggle showing the create article form
-    $navNewArticle.on("click", () => {
+    $navNewArticle.on("click", async function () {
         if (currentUser) {
+            // toggle form
             $newArticle.toggle();
-            generateUserStories();
+            // add user stories to bottom of form
+            await generateUserStories();
+            // if there is no articles (no user stories) add stories form all sources
+            if ($("#all-articles-list")[0].children[0] === undefined) {
+                generateStories();
+            }
             $("#user-profile").addClass("hidden");
         }
     });
